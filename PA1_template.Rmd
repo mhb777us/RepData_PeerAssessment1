@@ -1,0 +1,195 @@
+Title: "PA1_template.Rmd" - RepData_PeerAssessment1
+author: "hb"
+date: "September 14, 2015"
+output: html_document
+
+# Introduction
+This is an assignment 1 for Reproducible Research Course
+
+#### Loading and preprocessing the data
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results='hide' }
+#library(plyr)
+library(foreign)
+library(sqldf)
+```
+
+```{r}
+fileUrl1 = "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+download.file(fileUrl1,destfile="Factivity.zip",method="curl")
+unzip("Factivity.zip", files = NULL, list = FALSE, overwrite = TRUE,
+      junkpaths = FALSE, exdir = getwd() , unzip = "internal",
+      setTimes = FALSE)
+# Load the raw activity data into  DFactivity data frame
+DFactivity <- read.csv("activity.csv")
+
+```
+
+## 1. What is mean total number of steps taken per day?
+
+The total number of days are calcuated ignoring missing values (NAs)
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+# Remove NA records
+DFactivity_withNoNA <- na.omit(DFactivity)
+
+mytot <- sqldf("select date, 
+                       sum(steps) Totsteps, 
+                       avg(steps) Mean, 
+                       median(steps) Median 
+               from DFactivity_withNoNA 
+               group by date ")
+```
+
+### 1-1 Calculate the total number of steps taken per day
+
+The total steps, Average of Total and Median of Total is calculated in the above step. The following are total steps per day:
+
+```{r, echo =TRUE}
+#mytot [,c(date,Totsteps)]
+mytot[, c(1,2)]
+```
+### 1-2 If you do not understand the difference between a histogram and a barplot, research the difference between them. Make a histogram of the total number of steps taken each day
+
+The Histogram of Total number steps taken each day is below:
+```{r, echo =TRUE}
+par (mfrow = c(1,1))
+hist(mytot$Totsteps , main = "Total Steps", xlab = "Steps", col = "Red")
+#hist(mytot$Totsteps,freq=TRUE)
+
+```
+
+### 1-3 Calculate and report the mean and median of the total number of steps taken per day
+
+The mean and median of total number of steps taken each day is below:
+
+```{r, echo =TRUE}
+mytot[, c(1,3,4)]
+
+
+```
+
+## 2 What is the average daily activity pattern?
+```{r}
+myinterval <- sqldf("select interval, 
+                       sum(steps) Totsteps, 
+                       avg(steps) Avesteps
+                    from DFactivity_withNoNA 
+                    group by interval ")
+
+```
+
+### 2-1 Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+
+Below is the time series plot of interval and average steps taken per day:
+
+```{r}
+plot(myinterval$interval, myinterval$Avesteps, type = "l" ,main = "Average Daily Activity Pattern", xlab = "Interval", ylab = "Average Steps", col = "Blue")
+
+
+```
+
+### 2-2 Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+Below is the 5-minute interval that contains highest steps:
+```{r}
+subset(myinterval, myinterval$Avesteps == max(myinterval$Avesteps)) ### Get max Average from the DF
+
+```
+
+## 3 Imputing missing values
+
+### 3-1 Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
+
+Calculating the number of missing values in the data frame DFactivity (The raw data)
+
+```{r}
+missing <- sum(is.na(DFactivity))
+total <-nrow(DFactivity)
+per_missing <- (missing/total) *100
+per_missing
+missing
+```
+
+Per above calculation, the data has 2304 missing values (NAs) which is aroun 13%
+
+### 3-2 Devise a strategy for filling in all of the missing values in the dataset.
+
+My strategy is to replace the missing values with Average of average mean of steps calculated from data frame mytot that was created in Step/Question 1
+```{r}
+
+avgOfMean <- mean(mytot$Mean) # Calculate the average of average steps per day
+avgOfMean ### REMOVE THIS
+DFactivity_nomissing <- DFactivity # copy the original raw data into a temp data frame
+
+### Fill in the NA with avgOfMean calcualted in the prior step
+DFactivity_nomissing$steps <- ifelse(is.na(DFactivity_nomissing$steps), avgOfMean, DFactivity_nomissing$steps )
+#DFactivity_nomissing$steps ### REMOVE THIS
+```
+
+### 3-3 Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+```{r}
+mytot_nomissing <- sqldf("select date, 
+                       sum(steps) Totsteps, 
+                       avg(steps) Average, 
+                       median(steps) Median 
+               from DFactivity_nomissing
+               group by date ")
+```
+
+### 3-4 Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. 
+
+```{r}
+### plot total steps by date
+par (mfrow = c(1,1))
+hist(mytot_nomissing$Totstep , main = "Total Steps with missing values filled", xlab = "Steps", col = "Green")
+
+```
+
+Here is the mean, median, and total steps per day after filling in the missing values:
+```{r}
+mytot_nomissing
+```
+### 3-5 Do these values differ from the estimates from the first part of the assignment? 
+###What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+Yes. These values differ from the estimates from the first part of the assignment. With missing values filled in, the average of total daily number of steps increasd for the date that had missing values (for eg: 2012-10-02). However, it had no impact on other dates which do not have missing values. However, the historgram above (in green) looks little more normalized than before.
+
+## 4 Are there differences in activity patterns between weekdays and weekends?
+
+### 4-1 Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+
+```{r}
+### Create a new variable DAY in with weekday or weekend based on the date
+
+DFactivity_nomissing$day <- ifelse(as.POSIXlt(DFactivity_nomissing$date)$wday >5,"weekend", "weekday" )
+
+### Create a inteval summary for weekday data
+myinterval_weekday <- sqldf("select interval, 
+                       sum(steps) Totsteps, 
+                       avg(steps) Avesteps
+                    from DFactivity_nomissing
+                    where day = 'weekday'
+                    group by interval ")
+
+### Create a inteval summary for weekend data
+myinterval_weekend <- sqldf("select interval, 
+                       sum(steps) Totsteps, 
+                       avg(steps) Avesteps
+                    from DFactivity_nomissing
+                    where day = 'weekend'
+                    group by interval ")
+
+```
+### 4-2 Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). 
+```{r, echo=FALSE}
+par (mfrow = c(1,2))
+plot(myinterval_weekday$interval, myinterval_weekday$Avesteps, type = "l" ,main = "Weekday", xlab = "Interval", ylab = "Average Steps", col = "Blue", yaxt = "n")
+axis(2,  c (0,50,100,150,200,250))
+
+plot(myinterval_weekend$interval, myinterval_weekend$Avesteps, type = "l" ,main = "Weekend", xlab = "Interval", ylab = "Average Steps", col = "Red" , yaxt = "n")
+axis(2,  c (0,50,100,150,200,250))
+
+
+```
+

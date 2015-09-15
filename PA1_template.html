@@ -433,7 +433,7 @@ per_missing
 <p>My strategy is to replace the missing values with Average of average mean of steps calculated from data frame mytot that was created in Step/Question 1</p>
 
 <pre><code class="r">avgOfMean &lt;- mean(mytot$Mean) # Calculate the average of average steps per day
-avgOfMean ### REMOVE THIS
+avgOfMean  ## Display the fill in for missing vlaues
 </code></pre>
 
 <pre><code>## [1] 37.3826
@@ -442,8 +442,7 @@ avgOfMean ### REMOVE THIS
 <pre><code class="r">DFactivity_nomissing &lt;- DFactivity # copy the original raw data into a temp data frame
 
 ### Fill in the NA with avgOfMean calcualted in the prior step
-DFactivity_nomissing$steps &lt;- ifelse(is.na(DFactivity_nomissing$steps), avgOfMean, DFactivity_nomissing$steps )
-#DFactivity_nomissing$steps ### REMOVE THIS
+DFactivity_nomissing$steps &lt;- ifelse(is.na(DFactivity_nomissing$steps), avgOfMean, DFactivity_nomissing$steps ) 
 </code></pre>
 
 <h3>3-3 Create a new dataset that is equal to the original dataset but with the missing data filled in.</h3>
@@ -453,12 +452,12 @@ DFactivity_nomissing$steps &lt;- ifelse(is.na(DFactivity_nomissing$steps), avgOf
                        avg(steps) Average, 
                        median(steps) Median 
                from DFactivity_nomissing
-               group by date &quot;)
+               group by date &quot;)  # New data set with misssing values filled group by date
 </code></pre>
 
 <h3>3-4 Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day.</h3>
 
-<pre><code class="r">### plot total steps by date
+<pre><code class="r">### plot total steps by date with missing values filled in
 par (mfrow = c(1,1))
 hist(mytot_nomissing$Totstep , main = &quot;Total Steps with missing values filled&quot;, xlab = &quot;Steps&quot;, col = &quot;Green&quot;)
 </code></pre>
@@ -467,7 +466,7 @@ hist(mytot_nomissing$Totstep , main = &quot;Total Steps with missing values fill
 
 <p>Here is the mean, median, and total steps per day after filling in the missing values:</p>
 
-<pre><code class="r">mytot_nomissing
+<pre><code class="r">mytot_nomissing # Display mean, median and total steps after filling in the missing values
 </code></pre>
 
 <pre><code>##          date Totsteps    Average  Median
@@ -536,19 +535,20 @@ hist(mytot_nomissing$Totstep , main = &quot;Total Steps with missing values fill
 
 <h3>3-5 Do these values differ from the estimates from the first part of the assignment?</h3>
 
-<p>###What is the impact of imputing missing data on the estimates of the total daily number of steps?</p>
+<p>Yes
+###What is the impact of imputing missing data on the estimates of the total daily number of steps?</p>
 
-<p>Yes. These values differ from the estimates from the first part of the assignment. With missing values filled in, the average of total daily number of steps increasd for the date that had missing values (for eg: 2012-10-02). However, it had no impact on other dates which do not have missing values. However, the historgram above (in green) looks little more normalized than before.</p>
+<p>These values differ from the estimates from the first part of the assignment. With missing values filled in, the average of total daily number of steps increasd for the date that had missing values (for eg: 2012-10-02). However, it had no impact on other dates which do not have missing values. However, the historgram above (in green) looks little more normalized than before.</p>
 
 <h2>4 Are there differences in activity patterns between weekdays and weekends?</h2>
 
 <h3>4-1 Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.</h3>
 
-<pre><code class="r">### Create a new variable DAY in with weekday or weekend based on the date
+<pre><code class="r">### Create a new variable &quot;day&quot;&quot; in data frame DFactivity_nomissing with weekday or weekend based on the date
 
 DFactivity_nomissing$day &lt;- ifelse(as.POSIXlt(DFactivity_nomissing$date)$wday &gt;5,&quot;weekend&quot;, &quot;weekday&quot; )
 
-### Create a inteval summary for weekday data
+### Create a inteval summary with weekday data
 myinterval_weekday &lt;- sqldf(&quot;select interval, 
                        sum(steps) Totsteps, 
                        avg(steps) Avesteps
@@ -556,7 +556,7 @@ myinterval_weekday &lt;- sqldf(&quot;select interval,
                     where day = &#39;weekday&#39;
                     group by interval &quot;)
 
-### Create a inteval summary for weekend data
+### Create a inteval summary with weekend data
 myinterval_weekend &lt;- sqldf(&quot;select interval, 
                        sum(steps) Totsteps, 
                        avg(steps) Avesteps

@@ -252,7 +252,7 @@ My strategy is to replace the missing values with Average of average mean of ste
 
 ```r
 avgOfMean <- mean(mytot$Mean) # Calculate the average of average steps per day
-avgOfMean ### REMOVE THIS
+avgOfMean  ## Display the fill in for missing vlaues
 ```
 
 ```
@@ -263,8 +263,7 @@ avgOfMean ### REMOVE THIS
 DFactivity_nomissing <- DFactivity # copy the original raw data into a temp data frame
 
 ### Fill in the NA with avgOfMean calcualted in the prior step
-DFactivity_nomissing$steps <- ifelse(is.na(DFactivity_nomissing$steps), avgOfMean, DFactivity_nomissing$steps )
-#DFactivity_nomissing$steps ### REMOVE THIS
+DFactivity_nomissing$steps <- ifelse(is.na(DFactivity_nomissing$steps), avgOfMean, DFactivity_nomissing$steps ) 
 ```
 
 ### 3-3 Create a new dataset that is equal to the original dataset but with the missing data filled in.
@@ -276,14 +275,14 @@ mytot_nomissing <- sqldf("select date,
                        avg(steps) Average, 
                        median(steps) Median 
                from DFactivity_nomissing
-               group by date ")
+               group by date ")  # New data set with misssing values filled group by date
 ```
 
 ### 3-4 Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. 
 
 
 ```r
-### plot total steps by date
+### plot total steps by date with missing values filled in
 par (mfrow = c(1,1))
 hist(mytot_nomissing$Totstep , main = "Total Steps with missing values filled", xlab = "Steps", col = "Green")
 ```
@@ -293,7 +292,7 @@ hist(mytot_nomissing$Totstep , main = "Total Steps with missing values filled", 
 Here is the mean, median, and total steps per day after filling in the missing values:
 
 ```r
-mytot_nomissing
+mytot_nomissing # Display mean, median and total steps after filling in the missing values
 ```
 
 ```
@@ -361,9 +360,10 @@ mytot_nomissing
 ## 61 2012-11-30 10766.19 37.3825996 37.3826
 ```
 ### 3-5 Do these values differ from the estimates from the first part of the assignment? 
+Yes
 ###What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
-Yes. These values differ from the estimates from the first part of the assignment. With missing values filled in, the average of total daily number of steps increasd for the date that had missing values (for eg: 2012-10-02). However, it had no impact on other dates which do not have missing values. However, the historgram above (in green) looks little more normalized than before.
+These values differ from the estimates from the first part of the assignment. With missing values filled in, the average of total daily number of steps increasd for the date that had missing values (for eg: 2012-10-02). However, it had no impact on other dates which do not have missing values. However, the historgram above (in green) looks little more normalized than before.
 
 ## 4 Are there differences in activity patterns between weekdays and weekends?
 
@@ -371,11 +371,11 @@ Yes. These values differ from the estimates from the first part of the assignmen
 
 
 ```r
-### Create a new variable DAY in with weekday or weekend based on the date
+### Create a new variable "day"" in data frame DFactivity_nomissing with weekday or weekend based on the date
 
 DFactivity_nomissing$day <- ifelse(as.POSIXlt(DFactivity_nomissing$date)$wday >5,"weekend", "weekday" )
 
-### Create a inteval summary for weekday data
+### Create a inteval summary with weekday data
 myinterval_weekday <- sqldf("select interval, 
                        sum(steps) Totsteps, 
                        avg(steps) Avesteps
@@ -383,7 +383,7 @@ myinterval_weekday <- sqldf("select interval,
                     where day = 'weekday'
                     group by interval ")
 
-### Create a inteval summary for weekend data
+### Create a inteval summary with weekend data
 myinterval_weekend <- sqldf("select interval, 
                        sum(steps) Totsteps, 
                        avg(steps) Avesteps
